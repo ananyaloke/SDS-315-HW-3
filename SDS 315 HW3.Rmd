@@ -1,0 +1,347 @@
+---
+title: "SDS 315 HW 2"
+author: "Ananya Loke - UT EID: asl3324"
+date: "2025-01-27"
+output: pdf_document
+---
+
+
+#### Click [here](https://github.com/ananyaloke/SDS-315-HW-2) for the Github link to the code!
+
+```{r global_options, echo=FALSE}
+knitr::opts_chunk$set(fig.height=7, fig.width=8, warning=FALSE, message = FALSE, tidy=TRUE, echo=FALSE, tidy.opts=list(width.cutoff=60))
+```
+
+
+```{r, echo = FALSE, include=FALSE}
+#loading libraries
+library(tidyverse)
+library(lubridate)
+library(kableExtra)
+library(rvest)
+library(RColorBrewer)
+library(mosaic)
+
+
+#reading in libraries
+gas <- read_csv("gasprices.csv")
+cars <- read_csv("sclass.csv")
+nbc <- read_csv("nbc_pilotsurvey.csv")
+ebay <- read_csv("ebay.csv")
+
+
+
+```
+# **Problem 1: Gas Price Theories**
+
+### Part A: Gas stations charge more if they lack direct competition in sight
+
+
+
+
+```{r}
+
+mean(Price~Competitors,
+data=gas)
+
+boot_comp = do(10000)*diffmean(Price~Competitors, data=resample(gas))
+
+
+ggplot(boot_comp) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_comp, level = 0.95)
+
+
+```
+
+#### Claim: Gas stations charge more if they lack direct competition in sight.
+#### Evidence: I am 95% confident that the difference in means between gas prices of gas stations with competitors in sight versus without competitors in sight is between -$0.05 and $0.01. For the general estimated difference among all the bootstrapped samples, the average difference is -$0.02.
+#### Conclusion: The 95% confidence interval contains 0, so we can conclude that the mean difference is not statistically significant. Therefore, the theory is unsupported by the data. 
+
+
+
+
+
+### Part B: The richer the area, the higher the gas prices
+
+```{r}
+cor(Price~Income,
+data=gas)
+
+boot_income = do(10000)*cor(Price~Income, data=resample(gas))
+
+
+ggplot(boot_income) + 
+  geom_histogram(aes(x=cor), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_income, level = 0.95)
+
+```
+
+
+#### Claim: The richer the area, the higher the gas prices.
+#### Evidence: I am 95% confident that the correlation between gas prices of gas stations and area general income is between $0.19 and $0.57. The general estimated correlation among all the bootstrapped samples is about $0.40.
+#### Conclusion: The 95% confidence interval does not contain 0, so we can conclude that the mean difference is statistically significant. Therefore, the theory is supported by the data. 
+
+
+
+### Part C: Gas stations at stoplights charge more
+
+
+
+```{r}
+mean(Price~Stoplight,
+data=gas)
+
+boot_stoplight = do(10000)*diffmean(Price~Stoplight, data=resample(gas))
+
+
+ggplot(boot_stoplight) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_stoplight, level = 0.95)
+```
+
+#### Claim: Gas stations at stoplights charge more.
+#### Evidence: I am 95% confident that the true difference in means between gas prices of gas stations at stoplights verus gas stations not at stoplights is between -$0.03 and $0.03. For the general estimated difference among all the bootstrapped samples, the average difference is -$0.00.
+#### Conclusion: The 95% confidence interval contains 0, so we can conclude that the mean difference is not statistically significant. Therefore, the theory is unsupported by the data. 
+
+
+
+### Part D: Gas stations with direct highway access charge more
+
+
+
+
+```{r}
+
+mean(Price~Highway,
+data=gas)
+
+boot_highway = do(10000)*diffmean(Price~Highway, data=resample(gas))
+
+
+ggplot(boot_highway) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_highway, level = 0.95)
+
+
+```
+
+#### Claim: Gas stations with direct highway access charge more.
+#### Evidence: I am 95% confident that the difference in means between gas prices of gas stations with direct highway access versus without direct highway access is between $0.01 and $0.08. For the general estimated difference among all the bootstrapped samples, the average difference is $0.04.
+#### Conclusion: The 95% confidence interval does not contain 0, so we can conclude that the mean difference is statistically significant. Therefore, the theory is supported by the data. 
+
+
+### Part E: Shell charges more than all other non-Shell brands
+
+
+
+
+```{r}
+gas = gas %>%
+  mutate(isShell = ifelse(Brand == "Shell", yes=TRUE, no=FALSE))
+
+mean(Price~isShell,
+data=gas)
+
+boot_shell = do(10000)*diffmean(Price~isShell, data=resample(gas))
+
+
+ggplot(boot_shell) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_shell, level = 0.95)
+
+
+```
+
+#### Claim: Shell charges more than all other non-Shell brands.
+#### Evidence: I am 95% confident that the difference in means between gas prices of Shell gas stations versus non-Shell gas stations is between -$0.01 and $0.06. For the general estimated difference among all the bootstrapped samples, the average difference is $0.02.
+#### Conclusion: The 95% confidence interval contains 0, so we can conclude that the mean difference is not statistically significant. Therefore, the theory is unsupported by the data. 
+
+
+
+# **Problem 2: Mercedes S-Class Vehicles**
+
+### Part A: Average mileage of 2011 S-Class 63 AMGs
+
+
+
+```{r}
+
+filtered_cars <- subset(cars, year == "2011" & trim == "63 AMG")
+
+mean(~mileage, data=filtered_cars)
+
+boot_mileage = do(10000)*mean(~mileage, data=resample(filtered_cars))
+
+
+ggplot(boot_mileage) + 
+  geom_histogram(aes(x=mean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_mileage, level = 0.95)
+
+```
+
+#### I am 95% confident that the means mileage of 2011 S-Class 63 AMGs is between $26211.56 and $31755.28. The general estimated mean among all the bootstrapped samples is $28997.34.
+
+
+
+### Part B:
+
+```{r}
+
+filtered_cars2 <- subset(cars, year == "2014" & trim == "550")
+
+filtered_cars2 = filtered_cars2 %>%
+  mutate(isBlack = ifelse(color == "Black", yes=TRUE, no=FALSE))
+
+
+prop(~isBlack, data=filtered_cars2)
+
+boot_black = do(10000)*prop(~isBlack, data=resample(filtered_cars2))
+
+
+ggplot(boot_black) + 
+  geom_histogram(aes(x=prop_TRUE), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_black, level = 0.95)
+
+
+
+
+```
+#### I am 95% confident that the the proportion of all 2014 S-Class 550s that were painted black is between 0.417 and 0.452. The general proportion  among all the bootstrapped samples is 0.435.
+
+
+
+
+
+# **Problem 3: NBC Pilot Episode Rating Market Research**
+
+### Part A: Happiness comparison between “Living with Ed” and “My Name is Earl”.
+
+
+
+```{r}
+filtered_nbc1 <- subset(nbc, Show == "Living with Ed" | Show == "My Name is Earl")
+
+diffmean(Q1_Happy~Show, data=filtered_nbc1)
+
+boot_happy = do(10000)*diffmean(Q1_Happy~Show, data=resample(filtered_nbc1))
+
+
+ggplot(boot_happy) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_happy, level = 0.95)
+```
+
+
+1) Question: What question are you trying to answer?
+2) Approach: What approach/statistical tool did you use to answer the question?
+3) Results: What evidence/results did your approach provide to answer the question? (E.g. any numbers,
+tables, figures as appropriate.) Make sure to include appropriate measures of uncertainty!
+4) Conclusion: What is your conclusion about your question? Provide a written interpretation of your
+results, understandable to stakeholders who might plausibly take an interest in this data set.
+
+#### Question: Is there evidence that either “Living with Ed” or “My Name is Earl” consistently produces a higher mean Q1_Happy response among viewers?
+#### Approach: To answer the question, I used bootstrapping of the survey responses that were provided in order to find a confidence intervale for the difference of means in the Q1_Happy response among viewers for each show. 
+#### Results: I am 95% confident that the difference in means between Q1_Happy responses for “Living with Ed” and “My Name is Earl” is between -0.40 and 0.11. The general estimated difference among all the bootstrapped samples is -0.15.
+#### Conclusion: The 95% confidence interval contains 0, so we can conclude that the mean difference is not statistically significant. Therefore, we can say that neither show makes viewers significantly happier than the other. 
+
+
+
+### Part B: Annoyed comparison between “The Biggest Loser” and “The Apprentice: Los Angeles”.
+
+
+
+```{r}
+
+filtered_nbc2 <- subset(nbc, Show == "The Biggest Loser" | Show == "The Apprentice: Los Angeles")
+
+diffmean(Q1_Annoyed~Show, data=filtered_nbc2)
+
+boot_annoyed = do(10000)*diffmean(Q1_Annoyed~Show, data=resample(filtered_nbc1))
+
+
+ggplot(boot_annoyed) + 
+  geom_histogram(aes(x=diffmean), bins = 45, col = "deeppink4", fill = "lightpink")
+
+confint(boot_annoyed, level = 0.95)
+
+
+```
+
+
+
+#### Question: Is there evidence that either “The Biggest Loser” or “The Apprentice: Los Angeles” consistently produces a higher mean Q1_Annoyed response among viewers?
+#### Approach: To answer the question, I used bootstrapping of the survey responses that were provided in order to find a confidence intervale for the difference of means in the Q1_Annoyed response among viewers for each show. 
+#### Results: I am 95% confident that the difference in means between Q1_Annoyed responses for “The Biggest Loser” or “The Apprentice: Los Angeles” is between -1.09 and -0.40. The general estimated difference among all the bootstrapped samples is -0.75.
+#### Conclusion: The 95% confidence interval does not contain 0, so we can conclude that the mean difference is statistically significant. Therefore, we can say that one show makes viewers significantly more annoyed than the other.
+
+
+
+
+### Part C: Confusion proportion for between “Dancing with the Stars”.
+
+
+```{r}
+
+filtered_nbc3 <- subset(nbc, Show == "Dancing with the Stars")
+
+filtered_nbc3 = filtered_nbc3 %>%
+  mutate(isConfused = ifelse(Q2_Confusing >= 4, yes=TRUE, no=FALSE))
+
+
+prop(~isConfused, data=filtered_nbc3)
+
+boot_confused = do(10000)*prop(~isConfused, data=resample(filtered_nbc3))
+
+
+ggplot(boot_confused) + 
+  geom_histogram(aes(x=prop_TRUE), bins = 26, col = "deeppink4", fill = "lightpink")
+
+confint(boot_confused, level = 0.95)
+
+
+```
+
+
+
+#### Question: Based on this sample of respondents, what proportion of American TV watchers would we expect to give a response of 4 or greater to the “Q2_Confusing” question for "Dancing With the Stars"? 
+#### Approach: To answer the question, I used bootstrapping of the survey responses that were provided in order to find a confidence intervale for the proportion of a response of 4 or higher for the Q2_Confused response among viewers for "Dancing with the Stars".
+#### Results: I am 95% confident that the proportion of a response of 4 or higher for the Q2_Confused response is between 0.04 and 0.11. The general estimated difference among all the bootstrapped samples is 0.01.
+#### Conclusion: Based on the results, we would expect the proportion of people confused by the premise of Dancing With the Stars to be anywhere between 0.04 and 0.11. 
+
+
+
+# **Problem 4: Ebay Revenue Ratio**
+
+
+```{r}
+ebay <- ebay %>%
+  mutate(revenue_ratio = rev_after / rev_before)
+
+diffmean(revenue_ratio~adwords_pause, data=ebay)
+
+boot_ebay = do(10000)*diffmean(revenue_ratio~adwords_pause, data=resample(ebay))
+
+
+ggplot(boot_ebay) + 
+  geom_histogram(aes(x=diffmean), bins = 50, col = "deeppink4", fill = "lightpink")
+
+confint(boot_ebay, level = 0.95)
+
+
+```
+
+#### Question: Is the revenue ratio is the same in the treatment and control groups, or does the data favor the idea that paid search advertising on Google creates extra revenue for EBay? 
+#### Approach: To answer the question, I used created a new variable to calculate the revenue ratio (rev_after / rev_before) and then bootstrapped the data to find a 95% confidence interval in the difference of means for the treatment and control groups.
+#### Results: I am 95% confident that the difference of revenue ratio means for the treatement versus control groups is between -0.091 and -0.01. The general estimated difference among all the bootstrapped samples is -0.05.
+#### Conclusion: The 95% confidence interval does not contain 0, so we can conclude that the mean difference is statistically significant. Therefore, we can say that paid search advertising on Google does create extra revenue for EBay. 
+
+
